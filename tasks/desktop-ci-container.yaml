@@ -55,14 +55,30 @@ spec:
             fi
             sleep 60
         done
+
+        # Mapping Jenkins status to Tekton-compatible results
+        case "$status" in
+            "SUCCESS")
+                tekton_status="SUCCESS"
+                ;;
+            "FAILURE")
+                tekton_status="FAILURE"
+                ;;
+            "UNSTABLE")
+                tekton_status="WARNING"
+                ;;
+            *)
+                tekton_status="ERROR"
+                ;;
+        esac
         
         artifacts_url="$build_url/artifact/artifacts/"
         echo "$(results.ARTIFACTS_URL.path)=$artifacts_url"
         
-        test_output=$(jq -n --arg result "$status" '{"result":$result}')
+        test_output=$(jq -n --arg result "$tekton_status" '{"result":$result}')
         echo "$(results.TEST_OUTPUT.path)=$test_output"
         
         echo "Jenkins job completed with status: $status"
-        if [ "$status" != "SUCCESS" ]; then
+        if [ "$tekton_status" != "SUCCESS" ]; then
             exit 1
         fi
