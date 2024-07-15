@@ -26,8 +26,10 @@ spec:
         #!/bin/bash
         set -e
 
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$(params.SNAPSHOT)&OPENSTACK=true"
+
         echo "Triggering Jenkins job..."
-        response=$(curl -k -v -i -u $(params.JENKINS_USER):$(params.JENKINS_API_TOKEN) -X POST "$(params.JENKINS_URL)?$(params.SNAPSHOT)")
+        response=$(curl -k -v -i -u $(params.JENKINS_USER):$(params.JENKINS_API_TOKEN) -X POST "$(params.JENKINS_URL)?$JOB_PARAMETERS")
         
         echo "Response from Jenkins:"
         echo "$response"
