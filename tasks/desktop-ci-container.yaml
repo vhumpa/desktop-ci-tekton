@@ -1,0 +1,68 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: jenkins-task
+spec:
+  params:
+    - name: SNAPSHOT
+      type: string
+    - name: JENKINS_URL
+      type: string
+    - name: JENKINS_USER
+      type: string
+    - name: JENKINS_API_TOKEN
+      type: string
+  results:
+    - name: REQUEST_URL
+      description: The Jenkins queue URL
+    - name: ARTIFACTS_URL
+      description: URL to the Jenkins job artifacts
+    - name: TEST_OUTPUT
+      description: Output of the test results
+  steps:
+    - name: trigger-jenkins
+      image: quay.io/vhumpa/jenkins-watcher:latest
+      script: |
+        #!/bin/bash
+        set -e
+
+        echo "Triggering Jenkins job..."
+        response=$(curl -k -v -i -u $(params.JENKINS_USER):$(params.JENKINS_API_TOKEN) -X POST "$(params.JENKINS_URL)?$(params.SNAPSHOT)")
+        
+        echo "Response from Jenkins:"
+        echo "$response"
+        
+        queue_url=$(echo "$response" | grep "Location:" | cut -d ' ' -f2 | tr -d '\r')
+        echo "Queue URL: $queue_url"
+        echo "$(results.REQUEST_URL.path)=$queue_url"
+        
+        echo "Waiting for the job to start..."
+        while : ; do
+            build_url=$(curl -k -s -u $(params.JENKINS_USER):$(params.JENKINS_API_TOKEN) "$queue_url/api/json" | jq -r '.executable.url')
+            echo "Build URL: $build_url"
+            if [ "$build_url" != "null" ]; then
+                break
+            fi
+            sleep 10
+        done
+        
+        echo "Waiting for the job to complete..."
+        while : ; do
+            status=$(curl -k -s -u $(params.JENKINS_USER):$(params.JENKINS_API_TOKEN) "$build_url/api/json" | jq -r '.result')
+            echo "Job status: $status"
+            if [ "$status" != "null" ]; then
+                break
+            fi
+            sleep 60
+        done
+        
+        artifacts_url="$build_url/artifact/artifacts/"
+        echo "$(results.ARTIFACTS_URL.path)=$artifacts_url"
+        
+        test_output=$(jq -n --arg result "$status" '{"result":$result}')
+        echo "$(results.TEST_OUTPUT.path)=$test_output"
+        
+        echo "Jenkins job completed with status: $status"
+        if [ "$status" != "SUCCESS" ]; then
+            exit 1
+        fi

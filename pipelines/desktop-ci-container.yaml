@@ -1,0 +1,43 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: jenkins-pipeline
+spec:
+  description: >-
+    Pipeline to trigger Jenkins job and retrieve result.
+  params:
+    - name: SNAPSHOT
+      description: A list of container images that should undergo testing
+    - name: JENKINS_URL
+      description: URL of the Jenkins job to trigger
+    - name: JENKINS_USER
+      description: Jenkins user name
+    - name: JENKINS_API_TOKEN
+      description: Jenkins API token
+  results:
+    - name: REQUEST_URL
+      value: "$(tasks.jenkins-task.results.REQUEST_URL)"
+    - name: ARTIFACTS_URL
+      value: "$(tasks.jenkins-task.results.ARTIFACTS_URL)"
+    - name: TEST_OUTPUT
+      value: "$(tasks.jenkins-task.results.TEST_OUTPUT)"
+  tasks:
+    - name: jenkins-task
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/your-repo/jenkins-tekton-task
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/jenkins.yaml
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+        - name: JENKINS_URL
+          value: $(params.JENKINS_URL)
+        - name: JENKINS_USER
+          value: $(params.JENKINS_USER)
+        - name: JENKINS_API_TOKEN
+          value: $(params.JENKINS_API_TOKEN)
