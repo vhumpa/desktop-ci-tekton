@@ -4,12 +4,25 @@ metadata:
   name: tmt-via-testing-farm
 spec:
   description: >-
-    Expects secrets:
-      `testing-farm-secret` containing a key `testing-farm-token` with testing-farm API token
-      `imagerepository-for-varnish-6-mvp-varnish-6-mvp-image-pull` containing pull secret in `.dockerconfigjson`
+    Secrets to provide:
+      Key/value with key `testing-farm-token` containing the testing-farm API token.
+      Provide name of this secret as `TESTING_FARM_TOKEN_SECRET_NAME` parameter.
+      
+      Pull secret to the registry used by SNAPSHOT.
+      Provide name of this secret as `PULL_SECRET_NAME` parameter.
+
+    Expects params:
+      `SNAPSHOT` provided by the pipeline automatically
+      `PULL_SECRET_NAME` name of the Image pull secret
+      `TESTING_FARM_TOKEN_SECRET_NAME` name of the Key/value secret
   params:
     - name: SNAPSHOT
       description: A list of container images that should undergo testing
+    - name: PULL_SECRET_NAME
+      description: Image pull secret to inject into the Testing Farm jobs
+    - name: TESTING_FARM_TOKEN_SECRET_NAME
+      default: "testing-farm-secret"
+      description: Name of the Key/Value secret with testing-farm-token key      
     - name: GIT_URL
       default: ""
       description: URL of the GIT repository that contains the tests.
@@ -53,6 +66,10 @@ spec:
       params:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
+        - name: PULL_SECRET_NAME
+          value: $(params.PULL_SECRET_NAME)
+        - name: TESTING_FARM_TOKEN_SECRET_NAME
+          value: $(params.TESTING_FARM_TOKEN_SECRET_NAME)
         - name: GIT_URL
           value: $(params.GIT_URL)
         - name: GIT_REF
