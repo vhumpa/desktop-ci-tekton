@@ -27,7 +27,9 @@ spec:
         set -e
         set -x
 
-        echo $SNAPSHOT
+        echo $(params.SNAPSHOT)
+
+        export SNAPSHOT=$(params.SNAPSHOT)
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
