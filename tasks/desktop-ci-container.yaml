@@ -25,8 +25,14 @@ spec:
       script: |
         #!/bin/bash
         set -e
+        set -x
 
-        JOB_PARAMETERS="VERSION=SNAPSHOT:$(params.SNAPSHOT)&OPENSTACK=true"
+        if [[ -z "$CONTAINER_IMAGE" ]]; then
+            # Gather ref from SNAPSHOT itself
+            export CONTAINER_IMAGE=$(python3 -c "import os; import json; print(json.loads(os.environ['SNAPSHOT'])['components'][0]['containerImage'])")
+        fi
+
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true"
 
         echo "Triggering Jenkins job..."
         response=$(curl -k -v -i -u $(params.JENKINS_USER):$(params.JENKINS_API_TOKEN) -X POST "$(params.JENKINS_URL)/buildWithParameters?$JOB_PARAMETERS")
