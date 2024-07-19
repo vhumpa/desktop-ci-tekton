@@ -39,28 +39,33 @@ spec:
         echo $SNAPSHOT
 
         wget seznam.cz
-        echo "-------------------------------------------------------------------"
-        curl -v seznam.cz
-        echo "-------------------------------------------------------------------"
-        curl -v https://download.devel.redhat.com
-        echo "-------------------------------------------------------------------"
-        curl -v http://download.devel.redhat.com
-        echo "-------------------------------------------------------------------"
-        wget -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        echo "-------------------------------------------------------------------"
-        wget -v https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        echo "-------------------------------------------------------------------"
-        curl -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        echo "-------------------------------------------------------------------"
-        curl -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        echo "-------------------------------------------------------------------"
-        curl -v http://nest.test.redhat.com/mnt/qa/
-        echo "-------------------------------------------------------------------"
-        curl -v http://nest.test.redhat.com/mnt/qa/
-        echo "-------------------------------------------------------------------"
-        curl -v https://beaker.engineering.redhat.com/
-        echo "-------------------------------------------------------------------"
-        curl -v https://jenkins.prod.osci.redhat.com/
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v seznam.cz
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v -k https://download.devel.redhat.com
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v http://download.devel.redhat.com
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        wget --connect-timeout=10 --read-timeout=30 --no-check-certificate http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        wget --connect-timeout=10 --read-timeout=30 --no-check-certificate https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v http://nest.test.redhat.com/mnt/qa/
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v https://gitlab.cee.redhat.com
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v http://nest.test.redhat.com/mnt/qa/
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v -k https://beaker.engineering.redhat.com/
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v -k https://jenkins.prod.osci.redhat.com/
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
+        curl --connect-timeout 10 --max-time 30 -v -k https://brewweb.engineering.redhat.com/
+        echo "-------------------------------------------------------------------\n\n\n\n\n"
 
 
         ### terminate - this is a connection test phase only....
