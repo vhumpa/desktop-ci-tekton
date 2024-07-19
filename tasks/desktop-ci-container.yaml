@@ -42,9 +42,13 @@ spec:
         echo "-------------------------------------------------------------------"
         curl -v seznam.cz
         echo "-------------------------------------------------------------------"
-        wget http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        curl -v https://download.devel.redhat.com
         echo "-------------------------------------------------------------------"
-        wget https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        curl -v http://download.devel.redhat.com
+        echo "-------------------------------------------------------------------"
+        wget -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------"
+        wget -v https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
         echo "-------------------------------------------------------------------"
         curl -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
         echo "-------------------------------------------------------------------"
