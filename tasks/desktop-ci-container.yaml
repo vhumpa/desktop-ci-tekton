@@ -33,16 +33,34 @@ spec:
           value: $(params.JENKINS_API_TOKEN)
       script: |
         #!/bin/bash
-        set -e
+        #set -e
         set -x
 
         echo $SNAPSHOT
 
         wget seznam.cz
-
+        echo "-------------------------------------------------------------------"
         curl -v seznam.cz
-
+        echo "-------------------------------------------------------------------"
+        wget http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------"
+        wget https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------"
         curl -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------"
+        curl -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        echo "-------------------------------------------------------------------"
+        curl -v http://nest.test.redhat.com/mnt/qa/
+        echo "-------------------------------------------------------------------"
+        curl -v http://nest.test.redhat.com/mnt/qa/
+        echo "-------------------------------------------------------------------"
+        curl -v https://beaker.engineering.redhat.com/
+        echo "-------------------------------------------------------------------"
+        curl -v https://jenkins.prod.osci.redhat.com/
+
+
+        ### terminate - this is a connection test phase only....
+        exit 1 
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
