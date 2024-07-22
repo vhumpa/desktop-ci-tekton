@@ -66,14 +66,13 @@ spec:
         # echo "-------------------------------------------------------------------\n\n\n\n\n"
         # curl --connect-timeout 10 --max-time 30 -v -k https://brewweb.engineering.redhat.com/
         # echo "-------------------------------------------------------------------\n\n\n\n\n"
-
-
-        curl -k -v https://errata.devel.redhat.com/
+        curl -k -v https://beaker.engineering.redhat.com/
         echo "------------------------------------------------------------------"
-        
-        curl -k -v https://brewhub.engineering.redhat.com
         echo "------------------------------------------------------------------"
-
+        echo "------------------------------------------------------------------"
+        echo "------------------------------------------------------------------"
+        echo "------------------------------------------------------------------"
+        echo "------------------------------------------------------------------"
         curl -k -v https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
         ### terminate - this is a connection test phase only....
         exit 1 
