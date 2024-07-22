@@ -67,7 +67,7 @@ spec:
         # curl --connect-timeout 10 --max-time 30 -v -k https://brewweb.engineering.redhat.com/
         # echo "-------------------------------------------------------------------\n\n\n\n\n"
         ip a
-
+        curl ifconfig.me
         #curl -k -v https://beaker.engineering.redhat.com/
         echo "------------------------------------------------------------------"
         echo "------------------------------------------------------------------"
