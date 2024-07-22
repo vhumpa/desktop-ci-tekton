@@ -67,6 +67,9 @@ spec:
         # curl --connect-timeout 10 --max-time 30 -v -k https://brewweb.engineering.redhat.com/
         # echo "-------------------------------------------------------------------\n\n\n\n\n"
 
+        curl -k -v https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        ### terminate - this is a connection test phase only....
+        exit 1 
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
