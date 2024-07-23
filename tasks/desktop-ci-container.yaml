@@ -68,6 +68,7 @@ spec:
         # echo "-------------------------------------------------------------------\n\n\n\n\n"
         ip a
         curl ifconfig.me
+
         #curl -k -v https://beaker.engineering.redhat.com/
         echo "------------------------------------------------------------------"
         echo "------------------------------------------------------------------"
@@ -75,9 +76,12 @@ spec:
         echo "------------------------------------------------------------------"
         echo "------------------------------------------------------------------"
         echo "------------------------------------------------------------------"
-        curl -k -v https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+        #curl -k -v https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
+
+
+        #curl -k -v https://beaker.engineering.redhat.com/
         ### terminate - this is a connection test phase only....
-        exit 1 
+        #exit 1 
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
