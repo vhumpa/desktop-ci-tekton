@@ -91,7 +91,7 @@ spec:
         JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true"
 
         echo "Triggering Jenkins job..."
-        response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/buildWithParameters?$JOB_PARAMETERS")
+        response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "$JENKINS_URL/buildWithParameters?$JOB_PARAMETERS")
         
         echo "Response from Jenkins:"
         echo "$response"
