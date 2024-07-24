@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: jenkins-task
+  name: desktop-ci-gating
 spec:
   params:
     - name: SNAPSHOT
@@ -38,51 +38,6 @@ spec:
 
         echo $SNAPSHOT
 
-        # wget seznam.cz
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v seznam.cz
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v -k https://download.devel.redhat.com
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v http://download.devel.redhat.com
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # wget --connect-timeout=10 --read-timeout=30 --no-check-certificate http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # wget --connect-timeout=10 --read-timeout=30 --no-check-certificate https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v http://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v http://nest.test.redhat.com/mnt/qa/
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v https://gitlab.cee.redhat.com
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v http://nest.test.redhat.com/mnt/qa/
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v -k https://beaker.engineering.redhat.com/
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v -k https://jenkins.prod.osci.redhat.com/
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        # curl --connect-timeout 10 --max-time 30 -v -k https://brewweb.engineering.redhat.com/
-        # echo "-------------------------------------------------------------------\n\n\n\n\n"
-        ip a
-        curl ifconfig.me
-
-        #curl -k -v https://beaker.engineering.redhat.com/
-        echo "------------------------------------------------------------------"
-        echo "------------------------------------------------------------------"
-        echo "------------------------------------------------------------------"
-        echo "------------------------------------------------------------------"
-        echo "------------------------------------------------------------------"
-        echo "------------------------------------------------------------------"
-        #curl -k -v https://desktopqe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com
-
-
-        #curl -k -v https://beaker.engineering.redhat.com/
-        ### terminate - this is a connection test phase only....
-        #exit 1 
-
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
             export CONTAINER_IMAGE=$(python3 -c "import os; import json; print(json.loads(os.environ['SNAPSHOT'])['components'][0]['containerImage'])")
@@ -98,7 +53,7 @@ spec:
         
         queue_url=$(echo "$response" | grep "Location:" | cut -d ' ' -f2 | tr -d '\r')
         echo "Queue URL: $queue_url"
-        echo "$(results.REQUEST_URL.path)=$queue_url"
+        echo $queue_url > $(results.REQUEST_URL.path)
         
         echo "Waiting for the job to start..."
         while : ; do
@@ -137,10 +92,10 @@ spec:
         esac
         
         artifacts_url="$build_url/artifact/artifacts/"
-        echo "$(results.ARTIFACTS_URL.path)=$artifacts_url"
+        echo $artifacts_url > $(results.ARTIFACTS_URL.path)
         
         test_output=$(jq -n --arg result "$tekton_status" '{"result":$result}')
-        echo "$(results.TEST_OUTPUT.path)=$test_output"
+        echo $test_output > $(results.TEST_OUTPUT.path)
         
         echo "Jenkins job completed with status: $status"
         if [ "$tekton_status" != "SUCCESS" ]; then

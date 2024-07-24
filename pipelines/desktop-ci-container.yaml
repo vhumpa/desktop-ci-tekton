@@ -22,7 +22,7 @@ spec:
     - name: TEST_OUTPUT
       value: "$(tasks.jenkins-task.results.TEST_OUTPUT)"
   tasks:
-    - name: jenkins-task
+    - name: desktop-ci-gating
       taskRef:
         resolver: git
         params:
