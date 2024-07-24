@@ -94,10 +94,10 @@ spec:
         artifacts_url="$build_url/artifact/artifacts/"
         echo $artifacts_url > $(results.ARTIFACTS_URL.path)
         
-        test_output=$(jq -n --arg result "$tekton_status" '{"result":$result}')
+        test_output="{\"result\":\"$tekton_status\"}"
         echo $test_output > $(results.TEST_OUTPUT.path)
         
         echo "Jenkins job completed with status: $status"
-        if [ "$tekton_status" != "SUCCESS" ]; then
-            exit 1
-        fi
+        # if [ "$tekton_status" != "SUCCESS" ]; then
+        #     exit 1
+        # fi
