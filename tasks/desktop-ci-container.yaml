@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: desktop-ci-gating
+  name: jenkins-task
 spec:
   params:
     - name: SNAPSHOT
