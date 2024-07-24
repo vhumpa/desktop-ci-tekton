@@ -15,8 +15,6 @@ spec:
     - name: JENKINS_API_TOKEN
       description: Jenkins API token
   results:
-    - name: REQUEST_URL
-      value: "$(tasks.jenkins-task.results.REQUEST_URL)"
     - name: ARTIFACTS_URL
       value: "$(tasks.jenkins-task.results.ARTIFACTS_URL)"
     - name: TEST_OUTPUT
