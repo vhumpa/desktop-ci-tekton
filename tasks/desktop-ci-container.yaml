@@ -13,6 +13,8 @@ spec:
     - name: JENKINS_API_TOKEN
       type: string
   results:
+    - name: REQUEST_URL
+      description: The Jenkins queue URL
     - name: ARTIFACTS_URL
       description: URL to the Jenkins job artifacts
     - name: TEST_OUTPUT
@@ -51,7 +53,7 @@ spec:
         
         queue_url=$(echo "$response" | grep "Location:" | cut -d ' ' -f2 | tr -d '\r')
         echo "Queue URL: $queue_url"
-        # echo $queue_url > $(results.REQUEST_URL.path)
+        echo $queue_url > $(results.REQUEST_URL.path)
         
         echo "Waiting for the job to start..."
         while : ; do
@@ -99,4 +101,3 @@ spec:
         if [ "$tekton_status" != "SUCCESS" ]; then
              exit 1
         fi
-
