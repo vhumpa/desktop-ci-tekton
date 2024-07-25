@@ -91,7 +91,7 @@ spec:
                 ;;
         esac
         
-        artifacts_url="$build_urlartifact/artifacts/"
+        artifacts_url="${build_url}artifact/artifacts/"
         echo $artifacts_url > $(results.ARTIFACTS_URL.path)
         
         test_output="{\"result\":\"$tekton_status\"}"
