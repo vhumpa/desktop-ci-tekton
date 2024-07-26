@@ -43,7 +43,7 @@ spec:
             export CONTAINER_IMAGE=$(python3 -c "import os; import json; print(json.loads(os.environ['SNAPSHOT'])['components'][0]['containerImage'])")
         fi
 
-        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true&RUN_TAGS=gate"
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true&WAYLAND=true&RUN_TAGS=gate"
 
         echo "Triggering Jenkins job..."
         response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "$JENKINS_URL/buildWithParameters?$JOB_PARAMETERS")
@@ -79,25 +79,41 @@ spec:
         case "$status" in
             "SUCCESS")
                 tekton_status="SUCCESS"
+                successes=1
+                failures=0
+                warnings=0
                 ;;
             "FAILURE")
                 tekton_status="FAILURE"
+                successes=0
+                failures=1
+                warnings=0
                 ;;
             "UNSTABLE")
                 tekton_status="WARNING"
+                successes=0
+                failures=1
+                warnings=0
                 ;;
             *)
                 tekton_status="ERROR"
+                successes=0
+                failures=1
+                warnings=0
                 ;;
         esac
-        
+
+        # Capture the current timestamp
+        timestamp=$(date +%s)
+
         artifacts_url="${build_url}artifact/artifacts/"
         echo $artifacts_url > $(results.ARTIFACTS_URL.path)
         
-        test_output="{\"result\":\"$tekton_status\"}"
+        test_output="{\"result\":\"$tekton_status\",\"timestamp\":\"$timestamp\",\"successes\":$successes,\"failures\":$failures,\"warnings\":$warnings}"
         echo $test_output > $(results.TEST_OUTPUT.path)
         
         echo "Jenkins job completed with status: $status"
         if [ "$tekton_status" != "SUCCESS" ]; then
-             exit 1
+            echo "Overall test status: $tekton_status"
+            #exit 1 -> I thin we should not exit 1 or the konflux does not process the results correctly... 
         fi
