@@ -113,7 +113,7 @@ spec:
         echo $test_output > $(results.TEST_OUTPUT.path)
         
         echo "Jenkins job completed with status: $status"
+        echo "Overall test status: $tekton_status"
         if [ "$tekton_status" != "SUCCESS" ]; then
-            echo "Overall test status: $tekton_status"
-            #exit 1 -> I thin we should not exit 1 or the konflux does not process the results correctly... 
+            python3 -c "raise SystemExit(1)"
         fi
