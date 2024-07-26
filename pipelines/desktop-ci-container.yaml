@@ -16,11 +16,11 @@ spec:
       description: Jenkins API token
   results:
     - name: REQUEST_URL
-      value: "$(tasks.jenkins-task.results.REQUEST_URL)"
+      value: "$(tasks.desktop-gating-tests.results.REQUEST_URL)"
     - name: ARTIFACTS_URL
-      value: "$(tasks.jenkins-task.results.ARTIFACTS_URL)"
+      value: "$(tasks.desktop-gating-tests.results.ARTIFACTS_URL)"
     - name: TEST_OUTPUT
-      value: "$(tasks.jenkins-task.results.TEST_OUTPUT)"
+      value: "$(tasks.desktop-gating-tests.results.TEST_OUTPUT)"
   tasks:
     - name: desktop-gating-tests
       taskRef:
