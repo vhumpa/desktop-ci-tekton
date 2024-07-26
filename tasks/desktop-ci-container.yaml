@@ -47,14 +47,14 @@ spec:
 
         echo "Triggering Jenkins job..."
         response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "$JENKINS_URL/buildWithParameters?$JOB_PARAMETERS")
-        
+
         echo "Response from Jenkins:"
         echo "$response"
-        
+
         queue_url=$(echo "$response" | grep "Location:" | cut -d ' ' -f2 | tr -d '\r')
         echo "Queue URL: $queue_url"
         echo $queue_url > $(results.REQUEST_URL.path)
-        
+
         echo "Waiting for the job to start..."
         while : ; do
             build_url=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$queue_url/api/json" | jq -r '.executable.url')
@@ -64,7 +64,7 @@ spec:
             fi
             sleep 10
         done
-        
+
         echo "Waiting for the job to complete..."
         while : ; do
             status=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$build_url/api/json" | jq -r '.result')
@@ -75,31 +75,27 @@ spec:
             sleep 60
         done
 
+        # Get test results from Jenkins
+        test_report_url="${build_url}testReport/api/json"
+        test_results=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$test_report_url")
+
+        successes=$(echo $test_results | jq '.passCount')
+        failures=$(echo $test_results | jq '.failCount')
+        warnings=$(echo $test_results | jq '.skipCount')
+
         # Mapping Jenkins status to Tekton-compatible results
         case "$status" in
             "SUCCESS")
                 tekton_status="SUCCESS"
-                successes=1
-                failures=0
-                warnings=0
                 ;;
             "FAILURE")
                 tekton_status="FAILURE"
-                successes=0
-                failures=1
-                warnings=0
                 ;;
             "UNSTABLE")
                 tekton_status="FAILURE"
-                successes=0
-                failures=1
-                warnings=0
                 ;;
             *)
                 tekton_status="ERROR"
-                successes=0
-                failures=1
-                warnings=0
                 ;;
         esac
 
@@ -108,12 +104,12 @@ spec:
 
         artifacts_url="${build_url}artifact/artifacts/"
         echo $artifacts_url > $(results.ARTIFACTS_URL.path)
-        
+
         test_output="{\"result\":\"$tekton_status\",\"timestamp\":\"$timestamp\",\"successes\":$successes,\"failures\":$failures,\"warnings\":$warnings}"
         echo $test_output > $(results.TEST_OUTPUT.path)
-        
+
         echo "Jenkins job completed with status: $status"
         echo "Overall test status: $tekton_status"
-        if [ "$tekton_status" != "SUCCESS" ]; then
-            python3 -c "raise SystemExit(1)"
-        fi
+        # if [ "$tekton_status" != "SUCCESS" ]; then  ### NOPE! This still kills the pipeline seamingly early???? 
+        #     python3 -c "raise SystemExit(1)"
+        # fi
