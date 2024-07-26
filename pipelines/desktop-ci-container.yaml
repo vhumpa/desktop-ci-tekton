@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: jenkins-pipeline
+  name: desktop-gating-tests-pipeline
 spec:
   description: >-
     Pipeline to trigger Jenkins job and retrieve result.
@@ -22,7 +22,7 @@ spec:
     - name: TEST_OUTPUT
       value: "$(tasks.jenkins-task.results.TEST_OUTPUT)"
   tasks:
-    - name: jenkins-task
+    - name: desktop-gating-tests
       taskRef:
         resolver: git
         params:

@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: jenkins-task
+  name: desktop-gating-tests
 spec:
   params:
     - name: SNAPSHOT
@@ -90,7 +90,7 @@ spec:
                 warnings=0
                 ;;
             "UNSTABLE")
-                tekton_status="WARNING"
+                tekton_status="FAILURE"
                 successes=0
                 failures=1
                 warnings=0
