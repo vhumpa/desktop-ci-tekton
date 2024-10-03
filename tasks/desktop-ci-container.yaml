@@ -48,7 +48,7 @@ spec:
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
-            export CONTAINER_IMAGE=$(python3 -c "import os; import json; print([v for v in json.loads(os.environ['SNAPSHOT'])['components'] if v['name'] == '$COMPONENT'][0]['containerImage'])")
+            export CONTAINER_IMAGE=$(python3 -c "import os; import json; print([v for v in json.loads(os.environ['SNAPSHOT'])['components'] if '$COMPONENT' in v['name']][0]['containerImage'])")
         fi
 
         JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true&WAYLAND=true&RUN_TAGS=gate"
