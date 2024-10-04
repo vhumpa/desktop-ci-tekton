@@ -45,6 +45,12 @@ spec:
         if [ "$COMPONENT" == "toolbox-container" ]; then
           COMPONENT="toolbox"
         fi
+        if [ "$COMPONENT" == "flatpak-runtime-container" ]; then
+          COMPONENT="flatpak-runtime"
+        fi
+        if [ "$COMPONENT" == "flatpak-sdk-container" ]; then
+          COMPONENT="flatpak-sdk"
+        fi
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
