@@ -14,6 +14,8 @@ spec:
       description: Jenkins user name
     - name: JENKINS_API_TOKEN
       description: Jenkins API token
+    - name: ARCH
+      description: Architecture to run the pipeline with
   results:
     - name: REQUEST_URL
       value: "$(tasks.desktop-gating-tests.results.REQUEST_URL)"
@@ -41,3 +43,5 @@ spec:
           value: $(params.JENKINS_USER)
         - name: JENKINS_API_TOKEN
           value: $(params.JENKINS_API_TOKEN)
+        - name: ARCH
+          value: $(params.ARCH)

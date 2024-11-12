@@ -12,6 +12,8 @@ spec:
       type: string
     - name: JENKINS_API_TOKEN
       type: string
+    - name: ARCH
+      type: string
   results:
     - name: REQUEST_URL
       description: The Jenkins queue URL
@@ -31,6 +33,8 @@ spec:
           value: $(params.JENKINS_USER)
         - name: JENKINS_API_TOKEN
           value: $(params.JENKINS_API_TOKEN)
+        - name: ARCH
+          value: $(params.ARCH)
       script: |
         #!/bin/bash
         #set -e
@@ -57,7 +61,7 @@ spec:
             export CONTAINER_IMAGE=$(python3 -c "import os; import json; print([v for v in json.loads(os.environ['SNAPSHOT'])['components'] if '$COMPONENT' in v['name']][0]['containerImage'])")
         fi
 
-        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true&WAYLAND=true&RUN_TAGS=gate"
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH"
 
         echo "Triggering Jenkins job..."
         response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "$JENKINS_URL/buildWithParameters?$JOB_PARAMETERS")
