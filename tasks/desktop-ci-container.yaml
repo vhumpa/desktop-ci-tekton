@@ -43,7 +43,7 @@ spec:
         echo $SNAPSHOT
 
         # Extracting the component using sed
-        COMPONENT=$(echo "$JENKINS_URL" | sed -E 's#.*/job/beaker-([^-/]+)-.*#\1#')
+        COMPONENT=$(echo "$JENKINS_URL" | sed -E 's#.*/job/beaker-([^/]+)-RHEL-.*#\1#')
 
         # For "toolbox-container" set just "toolbox" - difference in git repo name from brew times
         if [ "$COMPONENT" == "toolbox-container" ]; then
