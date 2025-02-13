@@ -104,6 +104,10 @@ spec:
             sleep 60
         done
 
+        sleep 60
+        # get the status again to fight wired race conditions with status change in processing results???
+        status=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$build_url/api/json" | jq -r '.result')
+
         # Get test results from Jenkins
         test_report_url="${build_url}testReport/api/json"
         test_results=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$test_report_url")
