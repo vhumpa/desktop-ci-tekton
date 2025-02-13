@@ -42,6 +42,11 @@ spec:
 
         echo $SNAPSHOT
 
+        if [ -z "$ARCH" ]; then
+          ARCH="x86_64"
+        fi
+        echo $ARCH
+
         # Extracting the component using sed
         COMPONENT=$(echo "$JENKINS_URL" | sed -E 's#.*/job/beaker-([^/]+)-RHEL-.*#\1#')
 
@@ -61,7 +66,7 @@ spec:
             export CONTAINER_IMAGE=$(python3 -c "import os; import json; print([v for v in json.loads(os.environ['SNAPSHOT'])['components'] if '$COMPONENT' in v['name']][0]['containerImage'])")
         fi
 
-        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true&WAYLAND=true&RUN_TAGS=gate"
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=true&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH"
 
         echo "Triggering Jenkins job..."
         response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "$JENKINS_URL/buildWithParameters?$JOB_PARAMETERS")
