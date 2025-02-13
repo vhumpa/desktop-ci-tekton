@@ -72,7 +72,7 @@ spec:
             export CONTAINER_IMAGE=$(python3 -c "import os; import json; print([v for v in json.loads(os.environ['SNAPSHOT'])['components'] if '$COMPONENT' in v['name']][0]['containerImage'])")
         fi
 
-        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=$OPENSTACK&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH"
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=$OPENSTACK&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH&QECORE_COREDUMP_FETCH=true"
 
         echo "Triggering Jenkins job..."
         response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "$JENKINS_URL/buildWithParameters?$JOB_PARAMETERS")
