@@ -12,6 +12,8 @@ spec:
       type: string
     - name: JENKINS_API_TOKEN
       type: string
+    - name: ARCH
+      type: string
   results:
     - name: REQUEST_URL
       description: The Jenkins queue URL
@@ -31,6 +33,8 @@ spec:
           value: $(params.JENKINS_USER)
         - name: JENKINS_API_TOKEN
           value: $(params.JENKINS_API_TOKEN)
+        - name: ARCH
+          value: $(params.ARCH)
       script: |
         #!/bin/bash
         #set -e
