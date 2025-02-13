@@ -47,7 +47,7 @@ spec:
         fi
         echo $ARCH
 
-        if [ "$ARCH" = "x86_64" ]; then
+        if [ "$ARCH" == "x86_64" ]; then
           OPENSTACK="true"
         else
           OPENSTACK="false"
@@ -105,7 +105,13 @@ spec:
         done
 
         sleep 60
-        # get the status again to fight wired race conditions with status change in processing results???
+
+        if [ "$OPENSTACK" == "false" ]; then
+          sleep 200
+        else
+          sleep 15
+        fi
+        # get the status again to fight wired race conditions with status change in processing results in beaker???
         status=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$build_url/api/json" | jq -r '.result')
 
         # Get test results from Jenkins
