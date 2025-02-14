@@ -115,12 +115,12 @@ spec:
         status=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$build_url/api/json" | jq -r '.result')
 
         # Get test results from Jenkins
-        test_report_url="${build_url}testReport/api/json"
-        test_results=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$test_report_url")
+        test_results=$(curl -k -s -u $JENKINS_USER:$JENKINS_API_TOKEN "$test_report_url" || echo '{}')
 
-        successes=$(echo $test_results | jq '.passCount')
-        failures=$(echo $test_results | jq '.failCount')
-        warnings=$(echo $test_results | jq '.skipCount')
+        successes=$(echo "$test_results" | jq '.passCount // 0' 2>/dev/null || echo 0)
+        failures=$(echo "$test_results" | jq '.failCount // 0' 2>/dev/null || echo 0)
+        warnings=$(echo "$test_results" | jq '.skipCount // 0' 2>/dev/null || echo 0)
+
 
         # Mapping Jenkins status to Tekton-compatible results
         case "$status" in
