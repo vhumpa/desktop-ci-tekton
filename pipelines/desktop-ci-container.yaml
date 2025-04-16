@@ -16,6 +16,9 @@ spec:
       description: Jenkins API token
     - name: ARCH
       description: Arch
+    - name: PULL_SECRET_NAME        # i.e.: imagerepository-for-rhel-10-1-thunderbird-10-1-image-pull
+      description: Name of the pull secret for snapshot
+      default: ""
   results:
     - name: REQUEST_URL
       value: "$(tasks.desktop-gating-tests.results.REQUEST_URL)"
@@ -45,3 +48,5 @@ spec:
           value: $(params.JENKINS_API_TOKEN)
         - name: ARCH
           value: $(params.ARCH)
+        - name: PULL_SECRET_NAME
+          value: $(params.PULL_SECRET_NAME)
