@@ -81,9 +81,18 @@ spec:
 
         # Read the pull secret's content from the mounted secret volume
         AUTH=$(cat /etc/secrets/pull-secret-volume/.dockerconfigjson)
-
-        # Append AUTH to the job parameters
-        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=$OPENSTACK&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH&QECORE_COREDUMP_FETCH=true&AUTH=$(echo $AUTH)"
+        echo $AUTH
+        # Extract first "id:auth" from the full .dockerconfigjson
+        PAIR=$(jq -r '.auths
+        | to_entries[]
+        | "\(.key):\(.value.auth)"' \
+        /etc/secrets/pull-secret-volume/.dockerconfigjson \
+        | head -n1)
+        
+        # Only pass the id:auth pair to Jenkins to avoid URLencoding issues
+        AUTH_PARAM="$PAIR"
+        echo $AUTH_PARAM
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=$OPENSTACK&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH&QECORE_COREDUMP_FETCH=true&AUTH=$AUTH_PARAM"
         echo "JOB_PARAMETERS: $JOB_PARAMETERS"
 
         echo "Triggering Jenkins job..."
