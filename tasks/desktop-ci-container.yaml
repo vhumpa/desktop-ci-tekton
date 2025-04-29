@@ -31,6 +31,10 @@ spec:
   steps:
     - name: trigger-jenkins
       image: quay.io/vhumpa/jenkins-watcher:latest
+      volumeMounts:
+        - name: pull-secret-volume
+          mountPath: "/etc/secrets/pull-secret-volume"
+          readOnly: true
       env:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
