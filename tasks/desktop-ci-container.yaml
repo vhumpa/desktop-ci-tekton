@@ -58,11 +58,11 @@ spec:
         fi
         echo $ARCH
 
-        # if [ "$ARCH" == "x86_64" ]; then
-        #   OPENSTACK="true"
-        # else
-        OPENSTACK="false"
-        # fi
+        if [ "$ARCH" == "x86_64" ]; then
+          OPENSTACK="true"
+        else
+          OPENSTACK="false"
+        fi
 
         # Extracting the component using sed
         COMPONENT=$(echo "$JENKINS_URL" | sed -E 's#.*/job/beaker-([^/]+)-RHEL-.*#\1#')
