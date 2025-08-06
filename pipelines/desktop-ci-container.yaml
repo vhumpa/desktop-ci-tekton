@@ -28,6 +28,7 @@ spec:
       value: "$(tasks.desktop-gating-tests.results.TEST_OUTPUT)"
   tasks:
     - name: desktop-gating-tests
+      timeout: "720m"
       taskRef:
         resolver: git
         params:
