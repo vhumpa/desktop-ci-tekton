@@ -3,7 +3,6 @@ kind: Task
 metadata:
   name: desktop-gating-tests
 spec:
-  timeout: "720m"
   params:
     - name: SNAPSHOT
       type: string
