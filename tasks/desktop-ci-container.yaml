@@ -61,12 +61,19 @@ spec:
         if [ "$ARCH" == "x86_64" ]; then
           OPENSTACK="true"
           TESTINGFARM="false"
+        elif [ "$ARCH" == "aarch64" ]; then
+          OPENSTACK="false"
+          TESTINGFARM="true"
+        elif [ "$ARCH" == "s390x" ]; then
+          OPENSTACK="false"
+          TESTINGFARM="true"
         elif [ "$ARCH" == "ppc64le" ]; then
           OPENSTACK="false"
           TESTINGFARM="false"
         else
+          # Fallback for any unknown architecture
           OPENSTACK="false"
-          TESTINGFARM="true"
+          TESTINGFARM="false"
         fi
 
         # Extracting the component using sed
