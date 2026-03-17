@@ -67,11 +67,11 @@ spec:
         elif [ "$ARCH" == "s390x" ]; then
           OPENSTACK="false"
           TESTINGFARM="true"
-        elif [ "$ARCH" == "ppc64le" ]; then
+        elif [ "$ARCH" == "ppc64le" ]; then # use beaer still to utilize "desktoptalos1" system
           OPENSTACK="false"
           TESTINGFARM="false"
         else
-          # Fallback for any unknown architecture
+          # Fallback for any unknown architecture - both false means DIRECT use of beaker
           OPENSTACK="false"
           TESTINGFARM="false"
         fi
