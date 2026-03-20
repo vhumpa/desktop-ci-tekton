@@ -59,17 +59,17 @@ spec:
         echo $ARCH
 
         if [ "$ARCH" == "x86_64" ]; then
-          OPENSTACK="true"
-          TESTINGFARM="false"
+          OPENSTACK="false"
+          TESTINGFARM="true"
         elif [ "$ARCH" == "aarch64" ]; then
           OPENSTACK="false"
           TESTINGFARM="true"
         elif [ "$ARCH" == "s390x" ]; then
           OPENSTACK="false"
           TESTINGFARM="true"
-        elif [ "$ARCH" == "ppc64le" ]; then # use beaer still to utilize "desktoptalos1" system
+        elif [ "$ARCH" == "ppc64le" ]; then
           OPENSTACK="false"
-          TESTINGFARM="false"
+          TESTINGFARM="true"
         else
           # Fallback for any unknown architecture - both false means DIRECT use of beaker
           OPENSTACK="false"
