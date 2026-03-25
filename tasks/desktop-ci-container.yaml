@@ -59,8 +59,8 @@ spec:
         echo $ARCH
 
         if [ "$ARCH" == "x86_64" ]; then
-          OPENSTACK="false"
-          TESTINGFARM="True"
+          OPENSTACK="true"
+          TESTINGFARM="false"
         elif [ "$ARCH" == "aarch64" ]; then
           OPENSTACK="false"
           TESTINGFARM="true"
