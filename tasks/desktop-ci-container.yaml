@@ -58,9 +58,28 @@ spec:
         fi
         echo $ARCH
 
+        # Extracting the component using sed
+        COMPONENT=$(echo "$JENKINS_URL" | sed -E 's#.*/job/beaker-([^/]+)-RHEL-.*#\1#')
+
+        # For "toolbox-container" set just "toolbox" - difference in git repo name from brew times
+        if [ "$COMPONENT" == "toolbox-container" ]; then
+          COMPONENT="toolbox"
+        fi
+        if [ "$COMPONENT" == "flatpak-runtime-container" ]; then
+          COMPONENT="flatpak-runtime"
+        fi
+        if [ "$COMPONENT" == "flatpak-sdk-container" ]; then
+          COMPONENT="flatpak-sdk"
+        fi
+
         if [ "$ARCH" == "x86_64" ]; then
-          OPENSTACK="true"
-          TESTINGFARM="false"
+          if [ "$COMPONENT" == "thunderbird" ]; then
+            OPENSTACK="false"
+            TESTINGFARM="true"
+          else
+            OPENSTACK="true"
+            TESTINGFARM="false"
+          fi
         elif [ "$ARCH" == "aarch64" ]; then
           OPENSTACK="false"
           TESTINGFARM="true"
@@ -74,20 +93,6 @@ spec:
           # Fallback for any unknown architecture - both false means DIRECT use of beaker
           OPENSTACK="false"
           TESTINGFARM="false"
-        fi
-
-        # Extracting the component using sed
-        COMPONENT=$(echo "$JENKINS_URL" | sed -E 's#.*/job/beaker-([^/]+)-RHEL-.*#\1#')
-
-        # For "toolbox-container" set just "toolbox" - difference in git repo name from brew times
-        if [ "$COMPONENT" == "toolbox-container" ]; then
-          COMPONENT="toolbox"
-        fi
-        if [ "$COMPONENT" == "flatpak-runtime-container" ]; then
-          COMPONENT="flatpak-runtime"
-        fi
-        if [ "$COMPONENT" == "flatpak-sdk-container" ]; then
-          COMPONENT="flatpak-sdk"
         fi
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
