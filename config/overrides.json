@@ -9,22 +9,14 @@
     {
       "component": "thunderbird",
       "arch": "x86_64",
-      "params": { "OPENSTACK": "false", "TESTINGFARM": "false" }
+      "rhel": ">=10.2",
+      "params": { "OPENSTACK": "false", "TESTINGFARM": "false", "FIPS": "true" }
     },
     {
       "component": "firefox",
       "arch": "x86_64",
-      "params": { "OPENSTACK": "false", "TESTINGFARM": "false" }
-    },
-    {
-      "component": "thunderbird",
       "rhel": ">=10.2",
-      "params": { "FIPS": "true" }
-    },
-    {
-      "component": "firefox",
-      "rhel": ">=10.2",
-      "params": { "FIPS": "true" }
+      "params": { "OPENSTACK": "false", "TESTINGFARM": "false", "FIPS": "true" }
     }
   ]
 }
