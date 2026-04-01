@@ -72,28 +72,87 @@ spec:
           COMPONENT="flatpak-sdk"
         fi
 
-        if [ "$ARCH" == "x86_64" ]; then
-          if [ "$COMPONENT" == "thunderbird" ]; then
-            OPENSTACK="false"
-            TESTINGFARM="true"
+        # Extract RHEL version from JENKINS_URL (e.g. beaker-thunderbird-RHEL-10.2 -> 10.2)
+        RHEL_VERSION=$(echo "$JENKINS_URL" | sed -E 's#.*/job/beaker-[^/]+-RHEL-([0-9.]+).*#\1#')
+        echo "RHEL_VERSION: $RHEL_VERSION"
+
+        # --- Config-driven environment and parameter selection ---
+        # Fetch remote overrides config; fall back to empty config on failure
+        CONFIG_URL="https://raw.githubusercontent.com/vhumpa/desktop-ci-tekton/main/config/overrides.json"
+        CONFIG=$(curl -sf --connect-timeout 10 "$CONFIG_URL" || echo '{}')
+        echo "Config loaded: $(echo "$CONFIG" | jq -c '.' 2>/dev/null || echo 'FALLBACK (empty)')"
+
+        # Version comparison helper: supports >=, <=, >, <, and exact match
+        version_match() {
+          local spec="$1" actual="$2"
+          if [[ "$spec" == ">="* ]]; then
+            awk "BEGIN { exit !($actual >= ${spec#>=}) }"
+          elif [[ "$spec" == "<="* ]]; then
+            awk "BEGIN { exit !($actual <= ${spec#<=}) }"
+          elif [[ "$spec" == ">"* ]]; then
+            awk "BEGIN { exit !($actual > ${spec#>}) }"
+          elif [[ "$spec" == "<"* ]]; then
+            awk "BEGIN { exit !($actual < ${spec#<}) }"
           else
-            OPENSTACK="true"
-            TESTINGFARM="false"
+            [ "$actual" == "$spec" ]
           fi
-        elif [ "$ARCH" == "aarch64" ]; then
-          OPENSTACK="false"
-          TESTINGFARM="true"
-        elif [ "$ARCH" == "s390x" ]; then
-          OPENSTACK="false"
-          TESTINGFARM="true"
-        elif [ "$ARCH" == "ppc64le" ]; then
-          OPENSTACK="false"
-          TESTINGFARM="true"
-        else
-          # Fallback for any unknown architecture - both false means DIRECT use of beaker
-          OPENSTACK="false"
-          TESTINGFARM="false"
-        fi
+        }
+
+        # Start with safe defaults (Beaker)
+        OPENSTACK="false"
+        TESTINGFARM="false"
+
+        # Track which extra params were set by overrides (beyond OPENSTACK/TESTINGFARM)
+        EXTRA_PARAMS=""
+
+        # Apply arch-level defaults from config
+        arch_defaults=$(echo "$CONFIG" | jq -r --arg arch "$ARCH" \
+          '.defaults[$arch] // {} | to_entries[] | "\(.key)=\(.value)"' 2>/dev/null)
+        while IFS='=' read -r key val; do
+          [ -z "$key" ] && continue
+          if [ "$key" == "OPENSTACK" ] || [ "$key" == "TESTINGFARM" ]; then
+            eval "$key=\"$val\""
+          else
+            eval "$key=\"$val\""
+            EXTRA_PARAMS="$EXTRA_PARAMS&${key}=${val}"
+          fi
+        done <<< "$arch_defaults"
+        echo "After arch defaults: OPENSTACK=$OPENSTACK TESTINGFARM=$TESTINGFARM"
+
+        # Apply overrides - each override matches if ALL its filters match
+        override_count=$(echo "$CONFIG" | jq '.overrides | length' 2>/dev/null || echo 0)
+        for i in $(seq 0 $((override_count - 1))); do
+          override=$(echo "$CONFIG" | jq -c ".overrides[$i]")
+
+          # Check component filter
+          o_comp=$(echo "$override" | jq -r '.component // empty')
+          [ -n "$o_comp" ] && [ "$o_comp" != "$COMPONENT" ] && continue
+
+          # Check arch filter
+          o_arch=$(echo "$override" | jq -r '.arch // empty')
+          [ -n "$o_arch" ] && [ "$o_arch" != "$ARCH" ] && continue
+
+          # Check rhel version filter
+          o_rhel=$(echo "$override" | jq -r '.rhel // empty')
+          if [ -n "$o_rhel" ]; then
+            version_match "$o_rhel" "$RHEL_VERSION" || continue
+          fi
+
+          # All filters passed - apply params
+          echo "Override matched: $override"
+          while IFS='=' read -r key val; do
+            [ -z "$key" ] && continue
+            if [ "$key" == "OPENSTACK" ] || [ "$key" == "TESTINGFARM" ]; then
+              eval "$key=\"$val\""
+            else
+              eval "$key=\"$val\""
+              # Add to extra params (or update if already present)
+              EXTRA_PARAMS=$(echo "$EXTRA_PARAMS" | sed "s/&${key}=[^&]*//g")
+              EXTRA_PARAMS="$EXTRA_PARAMS&${key}=${val}"
+            fi
+          done <<< "$(echo "$override" | jq -r '.params | to_entries[] | "\(.key)=\(.value)"')"
+        done
+        echo "Final: OPENSTACK=$OPENSTACK TESTINGFARM=$TESTINGFARM EXTRA_PARAMS=$EXTRA_PARAMS"
 
         if [[ -z "$CONTAINER_IMAGE" ]]; then
             # Gather ref from SNAPSHOT itself
@@ -113,7 +172,7 @@ spec:
         # Only pass the id:auth pair to Jenkins to avoid URLencoding issues
         AUTH_PARAM="$PAIR"
         echo $AUTH_PARAM
-        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=$OPENSTACK&TESTINGFARM=$TESTINGFARM&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH&QECORE_COREDUMP_FETCH=true&AUTH=$AUTH_PARAM"
+        JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=$OPENSTACK&TESTINGFARM=$TESTINGFARM&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH&QECORE_COREDUMP_FETCH=true&AUTH=$AUTH_PARAM${EXTRA_PARAMS}"
         echo "JOB_PARAMETERS: $JOB_PARAMETERS"
 
         echo "Triggering Jenkins job..."
