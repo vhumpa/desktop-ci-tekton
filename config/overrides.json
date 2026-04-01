@@ -1,4 +1,5 @@
 {
+  "_docs": "See README.md in this directory for usage instructions and examples.",
   "defaults": {
     "x86_64":  { "OPENSTACK": "true" },
     "aarch64": { "TESTINGFARM": "true" },
