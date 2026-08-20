@@ -250,6 +250,6 @@ spec:
 
         echo "Jenkins job completed with status: $status"
         echo "Overall test status: $tekton_status"
-        # if [ "$tekton_status" != "SUCCESS" ]; then  ### NOPE! This still kills the pipeline seamingly early???? 
-        #     python3 -c "raise SystemExit(1)"
-        # fi
+        if [ "$tekton_status" != "SUCCESS" ]; then
+            exit 1
+        fi
