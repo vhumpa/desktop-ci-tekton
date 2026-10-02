@@ -17,7 +17,11 @@
       "component": "firefox",
       "arch": "x86_64",
       "rhel": ">=10.2",
-      "params": { "OPENSTACK": "false", "TESTINGFARM": "false", "FIPS": "true" }
+      "params": { "OPENSTACK": "false", "TESTINGFARM": "false", "FIPS": "true" },
+      "extra_run": {
+        "params": { "OPENSTACK": "false", "TESTINGFARM": "true", "FIPS": "false" },
+        "run_tags": "gate-non-fips"
+      }
     }
   ]
 }

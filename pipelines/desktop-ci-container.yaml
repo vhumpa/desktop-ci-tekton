@@ -24,6 +24,10 @@ spec:
       value: "$(tasks.desktop-gating-tests.results.REQUEST_URL)"
     - name: ARTIFACTS_URL
       value: "$(tasks.desktop-gating-tests.results.ARTIFACTS_URL)"
+    - name: EXTRA_REQUEST_URL
+      value: "$(tasks.desktop-gating-tests.results.EXTRA_REQUEST_URL)"
+    - name: EXTRA_ARTIFACTS_URL
+      value: "$(tasks.desktop-gating-tests.results.EXTRA_ARTIFACTS_URL)"
     - name: TEST_OUTPUT
       value: "$(tasks.desktop-gating-tests.results.TEST_OUTPUT)"
   tasks:

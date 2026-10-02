@@ -26,6 +26,10 @@ spec:
       description: The Jenkins queue URL
     - name: ARTIFACTS_URL
       description: URL to the Jenkins job artifacts
+    - name: EXTRA_REQUEST_URL
+      description: Extra non-FIPS Jenkins queue URL, or empty for a single run
+    - name: EXTRA_ARTIFACTS_URL
+      description: Extra non-FIPS Jenkins artifacts URL, or empty for a single run
     - name: TEST_OUTPUT
       description: Output of the test results
   steps:
@@ -104,6 +108,8 @@ spec:
 
         # Track which extra params were set by overrides (beyond OPENSTACK/TESTINGFARM)
         EXTRA_PARAMS=""
+        EXTRA_RUN="null"
+        FIPS="false"
 
         # Apply arch-level defaults from config
         arch_defaults=$(echo "$CONFIG" | jq -r --arg arch "$ARCH" \
@@ -151,6 +157,10 @@ spec:
               EXTRA_PARAMS="$EXTRA_PARAMS&${key}=${val}"
             fi
           done <<< "$(echo "$override" | jq -r '.params | to_entries[] | "\(.key)=\(.value)"')"
+          # Last matching rule that specifies extra_run wins; null disables it.
+          if echo "$override" | jq -e 'has("extra_run")' >/dev/null; then
+            EXTRA_RUN=$(echo "$override" | jq -c '.extra_run')
+          fi
         done
         echo "Final: OPENSTACK=$OPENSTACK TESTINGFARM=$TESTINGFARM EXTRA_PARAMS=$EXTRA_PARAMS"
 
@@ -174,6 +184,172 @@ spec:
         echo $AUTH_PARAM
         JOB_PARAMETERS="VERSION=SNAPSHOT:$CONTAINER_IMAGE&OPENSTACK=$OPENSTACK&TESTINGFARM=$TESTINGFARM&WAYLAND=true&RUN_TAGS=gate&ARCH=$ARCH&QECORE_COREDUMP_FETCH=true&AUTH=$AUTH_PARAM${EXTRA_PARAMS}"
         echo "JOB_PARAMETERS: $JOB_PARAMETERS"
+
+        # Optional results must also be written on the unchanged single-run path.
+        : > $(results.EXTRA_REQUEST_URL.path)
+        : > $(results.EXTRA_ARTIFACTS_URL.path)
+
+        # Firefox-only parallel path. Other components, architectures, and
+        # non-FIPS runs continue through the original single-run code below.
+        if [ "$COMPONENT" == "firefox" ] && [ "$ARCH" == "x86_64" ] && \
+           [ "$FIPS" == "true" ] && [ "$EXTRA_RUN" != "null" ]; then
+          # Do not trace registry authentication in the new request handling.
+          set +x
+          declare -A primary_params extra_params
+          IFS='&' read -r -a entries <<< "$JOB_PARAMETERS"
+          for entry in "${entries[@]}"; do
+            primary_params["${entry%%=*}"]="${entry#*=}"
+          done
+          for key in "${!primary_params[@]}"; do
+            extra_params["$key"]="${primary_params[$key]}"
+          done
+          while IFS='=' read -r key val; do
+            [ -z "$key" ] && continue
+            extra_params["$key"]="$val"
+          done <<< "$(echo "$EXTRA_RUN" | jq -r '.params | to_entries[] | "\(.key)=\(.value)"')"
+          extra_params[RUN_TAGS]=$(echo "$EXTRA_RUN" | jq -r '.run_tags // empty')
+
+          successes=0 failures=0 warnings=0
+          dual_error() {
+            echo "Firefox dual-run error: $*" >&2
+            jq -cn --arg timestamp "$(date +%s)" \
+              --argjson successes "$successes" --argjson failures "$failures" \
+              --argjson warnings "$warnings" \
+              '{result:"ERROR",timestamp:$timestamp,successes:$successes,failures:$failures,warnings:$warnings}' \
+              > $(results.TEST_OUTPUT.path)
+            exit 1
+          }
+          # Reject settings that could silently select all tests or the wrong
+          # backend. VERSION/AUTH/ARCH must remain identical to the primary.
+          [ "${extra_params[RUN_TAGS]}" == "gate-non-fips" ] && \
+            [ "${extra_params[FIPS]}" == "false" ] && \
+            [ "${extra_params[TESTINGFARM]}" == "true" ] && \
+            [ "${extra_params[OPENSTACK]}" == "false" ] || dual_error "Invalid extra_run settings"
+          for key in VERSION AUTH ARCH; do
+            [ "${extra_params[$key]}" == "${primary_params[$key]}" ] || \
+              dual_error "extra_run must preserve $key"
+          done
+          # RUN_TAGS takes precedence over RUN_TESTS in the Jenkins builder.
+          unset 'extra_params[RUN_TESTS]'
+
+          # Leave headroom inside the Pipeline's five-hour task timeout.
+          deadline=$((SECONDS + 17100))
+          jenkins_json() {
+            curl -k -fsS --connect-timeout 10 --max-time 30 \
+              -u "$JENKINS_USER:$JENKINS_API_TOKEN" "$1"
+          }
+          trigger_run() {
+            local run="$1" key headers queue
+            local -n params="$2"
+            local -a form=()
+            for key in "${!params[@]}"; do
+              form+=(--data-urlencode "$key=${params[$key]}")
+            done
+            headers=$(curl -k -fsS --connect-timeout 10 --max-time 30 \
+              -u "$JENKINS_USER:$JENKINS_API_TOKEN" -D - -o /dev/null \
+              "${form[@]}" "${JENKINS_URL%/}/buildWithParameters") || return 1
+            queue=$(echo "$headers" | tr -d '\r' | \
+              sed -n 's/^[Ll]ocation: *//p')
+            [[ "$queue" == "${JENKINS_URL%%/job/*}/queue/item/"* ]] || return 1
+            queue_urls[$run]="$queue"
+            echo "$run queue: $queue"
+          }
+          declare -A queue_urls build_urls statuses ready_at
+          # Trigger both before resolving either queue or waiting for completion.
+          trigger_run primary primary_params || dual_error "Primary trigger failed"
+          echo "${queue_urls[primary]}" > $(results.REQUEST_URL.path)
+          trigger_run extra extra_params || dual_error "Extra trigger failed"
+          echo "${queue_urls[extra]}" > $(results.EXTRA_REQUEST_URL.path)
+
+          while :; do
+            [ "$SECONDS" -lt "$deadline" ] || dual_error "Timed out waiting for Jenkins builds"
+            complete=true
+            for run in primary extra; do
+              if [ -z "${build_urls[$run]}" ]; then
+                queue=$(jenkins_json "${queue_urls[$run]%/}/api/json") || \
+                  dual_error "$run queue request failed"
+                echo "$queue" | jq -e 'type == "object"' >/dev/null || \
+                  dual_error "$run queue response is invalid"
+                [ "$(echo "$queue" | jq -r '.cancelled // false')" != "true" ] || \
+                  dual_error "$run queue was cancelled"
+                build_urls[$run]=$(echo "$queue" | jq -r '.executable.url // empty')
+                if [ -z "${build_urls[$run]}" ]; then
+                  complete=false
+                  continue
+                fi
+                [[ "${build_urls[$run]}" == "${JENKINS_URL%/}/"* ]] || \
+                  dual_error "$run queue returned an unexpected build URL"
+                echo "$run build: ${build_urls[$run]}"
+                if [ "$run" == "primary" ]; then
+                  echo "${build_urls[$run]}artifact/artifacts/" > $(results.ARTIFACTS_URL.path)
+                else
+                  echo "${build_urls[$run]}artifact/artifacts/" > $(results.EXTRA_ARTIFACTS_URL.path)
+                fi
+              fi
+              if [ -z "${statuses[$run]}" ]; then
+                build=$(jenkins_json "${build_urls[$run]}api/json") || \
+                  dual_error "$run build request failed"
+                echo "$build" | jq -e 'type == "object" and has("result")' >/dev/null || \
+                  dual_error "$run build response is invalid"
+                statuses[$run]=$(echo "$build" | jq -r '.result // empty')
+                if [ -z "${statuses[$run]}" ]; then
+                  complete=false
+                  continue
+                fi
+                # Existing settling intervals: 60+200 seconds for Beaker,
+                # 60+15 for cloud. The extra run always uses Testing Farm.
+                settle=75
+                if [ "$run" == "primary" ] && \
+                   [ "$OPENSTACK" == "false" ] && [ "$TESTINGFARM" == "false" ]; then
+                  settle=260
+                fi
+                ready_at[$run]=$((SECONDS + settle))
+              fi
+              [ "$SECONDS" -ge "${ready_at[$run]}" ] || complete=false
+            done
+            [ "$complete" == "true" ] && break
+            sleep 10
+          done
+
+          tekton_status=SUCCESS
+          for run in primary extra; do
+            build=$(jenkins_json "${build_urls[$run]}api/json") || dual_error "$run final status request failed"
+            statuses[$run]=$(echo "$build" | jq -er '.result | select(type == "string")') || \
+              dual_error "$run final status is missing"
+            case "${statuses[$run]}" in
+              SUCCESS) ;;
+              FAILURE|UNSTABLE) [ "$tekton_status" == "ERROR" ] || tekton_status=FAILURE ;;
+              *) tekton_status=ERROR ;;
+            esac
+            report=$(jenkins_json "${build_urls[$run]}testReport/api/json") || \
+              dual_error "$run test report request failed"
+            echo "$report" | jq -e '
+              [.passCount, .failCount, .skipCount] |
+              all(.[]; type == "number" and . >= 0 and . == floor) and (add > 0)
+            ' >/dev/null || dual_error "$run test report is invalid or empty"
+            successes=$((successes + $(echo "$report" | jq '.passCount')))
+            failures=$((failures + $(echo "$report" | jq '.failCount')))
+            warnings=$((warnings + $(echo "$report" | jq '.skipCount')))
+            if [ "$run" == "extra" ]; then
+              echo "$report" | jq -e '
+                [.suites[]?.cases[]? |
+                  select(.name | test("(^|[.])firefox_negotiates_pqc_tls$"))] |
+                length > 0 and all(.[]; .status == "PASSED" or .status == "FIXED")
+              ' >/dev/null || dual_error "PQC test is missing, failed, or skipped"
+            fi
+            echo "$run completed: ${statuses[$run]}"
+          done
+          if [ "$failures" -gt 0 ] && [ "$tekton_status" == "SUCCESS" ]; then
+            tekton_status=FAILURE
+          fi
+          jq -cn --arg result "$tekton_status" --arg timestamp "$(date +%s)" \
+            --argjson successes "$successes" --argjson failures "$failures" \
+            --argjson warnings "$warnings" \
+            '{result:$result,timestamp:$timestamp,successes:$successes,failures:$failures,warnings:$warnings}' \
+            > $(results.TEST_OUTPUT.path)
+          [ "$tekton_status" == "SUCCESS" ] || exit 1
+          exit 0
+        fi
 
         echo "Triggering Jenkins job..."
         response=$(curl -k -v -i -u $JENKINS_USER:$JENKINS_API_TOKEN -X POST "$JENKINS_URL/buildWithParameters?$JOB_PARAMETERS")
