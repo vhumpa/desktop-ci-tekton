@@ -223,8 +223,9 @@ spec:
           # backend. VERSION/AUTH/ARCH must remain identical to the primary.
           [ "${extra_params[RUN_TAGS]}" == "gate-non-fips" ] && \
             [ "${extra_params[FIPS]}" == "false" ] && \
-            [ "${extra_params[TESTINGFARM]}" == "true" ] && \
-            [ "${extra_params[OPENSTACK]}" == "false" ] || dual_error "Invalid extra_run settings"
+            [[ "${extra_params[OPENSTACK]}:${extra_params[TESTINGFARM]}" == "true:false" || \
+               "${extra_params[OPENSTACK]}:${extra_params[TESTINGFARM]}" == "false:true" ]] || \
+            dual_error "Invalid extra_run settings"
           for key in VERSION AUTH ARCH; do
             [ "${extra_params[$key]}" == "${primary_params[$key]}" ] || \
               dual_error "extra_run must preserve $key"
@@ -297,7 +298,7 @@ spec:
                   continue
                 fi
                 # Existing settling intervals: 60+200 seconds for Beaker,
-                # 60+15 for cloud. The extra run always uses Testing Farm.
+                # 60+15 for cloud. The extra run uses a cloud backend.
                 settle=75
                 if [ "$run" == "primary" ] && \
                    [ "$OPENSTACK" == "false" ] && [ "$TESTINGFARM" == "false" ]; then

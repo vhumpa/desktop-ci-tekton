@@ -63,15 +63,17 @@ The Firefox x86_64 RHEL 10.2+ override also defines:
 
 ```json
 "extra_run": {
-  "params": { "OPENSTACK": "false", "TESTINGFARM": "true", "FIPS": "false" },
+  "params": { "OPENSTACK": "true", "TESTINGFARM": "false", "FIPS": "false" },
   "run_tags": "gate-non-fips"
 }
 ```
 
 This starts two builds of the same Jenkins job in parallel: the normal FIPS
-gating suite on Beaker and a non-FIPS run on Testing Farm. Both use the same
+gating suite on Beaker and a non-FIPS run on OpenStack. Both use the same
 snapshot image, registry authentication, architecture, and common job settings.
-Testing Farm uses its normal pool selection unless `TF_POOL` is supplied.
+To switch the extra run to Testing Farm, set `OPENSTACK=false` and
+`TESTINGFARM=true` in its `params`. Testing Farm uses its normal pool selection
+unless `TF_POOL` is supplied.
 
 The extra run is deliberately limited to **Firefox on x86_64 with a final
 resolved `FIPS=true` setting** and an `extra_run` configuration. Thunderbird,
@@ -101,8 +103,9 @@ single-run Firefox scenarios do not execute the PQC test.
 ### Parameters and results
 
 Extra parameters replace primary values, rather than adding duplicate request
-parameters. The task requires `OPENSTACK=false`, `TESTINGFARM=true`,
-`FIPS=false`, and `run_tags=gate-non-fips` for the extra run. It rejects changes
+parameters. The task requires exactly one of `OPENSTACK` or `TESTINGFARM` to be
+`true`, with the other `false`, plus `FIPS=false` and `run_tags=gate-non-fips`
+for the extra run. It rejects changes
 to `VERSION`, `AUTH`, or `ARCH`, and clears inherited `RUN_TESTS` for that run.
 
 Each build is tracked through its own Jenkins queue URL. Both must finish with

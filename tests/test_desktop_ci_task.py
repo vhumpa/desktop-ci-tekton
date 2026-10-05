@@ -366,7 +366,8 @@ class DesktopCiTaskTests(unittest.TestCase):
                     self.assertEqual(primary["OPENSTACK"], "false")
                     self.assertEqual(primary["TESTINGFARM"], "false")
                     extra = self.params_for(triggers[1])
-                    self.assertEqual(extra["TESTINGFARM"], "true")
+                    self.assertEqual(extra["TESTINGFARM"], "false")
+                    self.assertEqual(extra["OPENSTACK"], "true")
                     self.assertEqual(extra["FIPS"], "false")
                     self.assertEqual(extra["RUN_TAGS"], "gate-non-fips")
                     for key in ("VERSION", "AUTH", "ARCH", "QECORE_COREDUMP_FETCH"):
@@ -384,6 +385,24 @@ class DesktopCiTaskTests(unittest.TestCase):
         self.assert_dual_success(completed, events, outputs)
         self.assertEqual(len([event for event in events if event["kind"] == "queue"
                               and event["run"] == "primary"]), 2)
+        self.assertEqual(json.loads(outputs["TEST_OUTPUT"])["result"], "SUCCESS")
+
+    def test_extra_run_can_use_openstack_instead_of_testing_farm(self):
+        config = dual_config()
+        config["overrides"][0]["extra_run"]["params"].update(
+            {"OPENSTACK": "true", "TESTINGFARM": "false"}
+        )
+        completed, events, outputs = self.run_task(config=config)
+        self.assertEqual(completed.returncode, 0, completed.stdout)
+        triggers = self.event_list(events, "trigger")
+        self.assertEqual(len(triggers), 2)
+        primary, extra = map(self.params_for, triggers)
+        self.assertEqual(extra["OPENSTACK"], "true")
+        self.assertEqual(extra["TESTINGFARM"], "false")
+        self.assertEqual(extra["FIPS"], "false")
+        self.assertEqual(extra["RUN_TAGS"], "gate-non-fips")
+        for key in ("VERSION", "AUTH", "ARCH"):
+            self.assertEqual(primary[key], extra[key])
         self.assertEqual(json.loads(outputs["TEST_OUTPUT"])["result"], "SUCCESS")
 
     def test_explicit_null_extra_run_retains_single_path(self):

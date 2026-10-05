@@ -19,7 +19,7 @@
       "rhel": ">=10.2",
       "params": { "OPENSTACK": "false", "TESTINGFARM": "false", "FIPS": "true" },
       "extra_run": {
-        "params": { "OPENSTACK": "false", "TESTINGFARM": "true", "FIPS": "false" },
+        "params": { "OPENSTACK": "true", "TESTINGFARM": "false", "FIPS": "false" },
         "run_tags": "gate-non-fips"
       }
     }
